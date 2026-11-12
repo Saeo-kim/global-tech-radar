@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head('Dashboard')}"></th:block>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css">
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">Global overview</div>
+                    <h1>Global Technology Intelligence</h1>
+                    <p class="lead">Country capability, technology momentum, company moves and the developer work market in one view.
+                        Welcome back, <span th:text="${displayName}">Analyst</span>.</p>
+                </div>
+                <div class="row">
+                    <a class="btn" th:href="@{/reports}">Latest intelligence</a>
+                    <a class="btn primary" th:href="@{/position}">
+                        <th:block th:replace="~{fragments/layout :: icon('target')}"></th:block> My position</a>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/layout :: sampleBanner}"></div>
+
+            <!-- KPIs -->
+            <section class="grid g-4" aria-label="Key indicators">
+                <div class="card kpi">
+                    <span class="kpi-label"><th:block th:replace="~{fragments/layout :: icon('globe')}"></th:block>Countries tracked</span>
+                    <span class="kpi-value" th:text="${kpiCountries}">9</span>
+                    <span class="kpi-foot">Avg. technology index <b class="num" th:text="${kpiAvgIndex}">80</b>/100 ·
+                        leader <th:block th:if="${kpiLeader}"><span class="flag" style="font-size:inherit" th:text="${kpiLeader.flag}"></span> <span th:text="${kpiLeader.name}">US</span></th:block></span>
+                </div>
+                <div class="card kpi">
+                    <span class="kpi-label"><th:block th:replace="~{fragments/layout :: icon('radar')}"></th:block>Technologies on radar</span>
+                    <span class="kpi-value" th:text="${kpiTechnologies}">33</span>
+                    <span class="kpi-foot" th:if="${kpiTopTech}">Fastest growth: <a th:href="@{/technologies/{s}(s=${kpiTopTech.slug})}" th:text="${kpiTopTech.name}">x</a>
+                        <span class="delta up" th:text="'+' + ${#numbers.formatDecimal(kpiTopTech.growthRate, 1, 0)} + '%'">+62%</span></span>
+                </div>
+                <div class="card kpi">
+                    <span class="kpi-label"><th:block th:replace="~{fragments/layout :: icon('users')}"></th:block>Developer pool (est.)</span>
+                    <span class="kpi-value"><span th:text="${kpiDevelopersMillions}">21.5</span><small>M</small></span>
+                    <span class="kpi-foot">Professional developers across tracked countries</span>
+                </div>
+                <div class="card kpi">
+                    <span class="kpi-label"><th:block th:replace="~{fragments/layout :: icon('briefcase')}"></th:block>Remote-eligible postings</span>
+                    <span class="kpi-value"><span th:text="${#numbers.formatDecimal(remoteShare, 1, 0)}">33</span><small>%</small></span>
+                    <span class="kpi-foot">Average across engineering role families</span>
+                </div>
+            </section>
+
+            <!-- World map + country panel -->
+            <section class="grid g-main">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2>World technology map</h2>
+                            <p>Click a country or marker for its indicators. Shading uses the selected metric.</p>
+                        </div>
+                        <div class="chips" id="map-metric" role="group" aria-label="Map metric">
+                            <button class="chip active" data-metric="techIndex">Tech index</button>
+                            <button class="chip" data-metric="aiReadiness">AI readiness</button>
+                            <button class="chip" data-metric="developerTalent">Talent</button>
+                            <button class="chip" data-metric="rndIntensity">R&amp;D</button>
+                        </div>
+                    </div>
+                    <div class="map-wrap">
+                        <div id="world-map"></div>
+                        <div class="map-legend" aria-hidden="true">
+                            <span><i style="background:#9ec5f4"></i>90+</span>
+                            <span><i style="background:#5598e7"></i>80–89</span>
+                            <span><i style="background:#2a78d6"></i>70–79</span>
+                            <span><i style="background:#1c5cab"></i>&lt;70</span>
+                            <span><i style="background:#1a2b48"></i>Not tracked</span>
+                        </div>
+                    </div>
+                    <div class="map-fallback" id="map-fallback">The interactive map could not be loaded (offline?). Country data is still available in the table below.</div>
+                    <div class="provenance" id="map-provenance"></div>
+                </div>
+                <div class="card map-panel" id="country-panel" aria-live="polite">
+                    <div class="muted">Loading country indicators…</div>
+                </div>
+            </section>
+
+            <!-- Latest Global Tech Updates -->
+            <section class="grid g-main" aria-label="Latest Global Tech Updates">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2>Latest Global Tech Updates</h2>
+                            <p>
+                                <span th:text="${newsStats.live} + ' collected'">0 collected</span> ·
+                                <span th:text="${newsStats.sample} + ' sample'">12 sample</span> ·
+                                last successful collection
+                                <b class="mono" th:text="${@fmt.time(newsStats.lastSuccessfulCollection)}">never</b>
+                            </p>
+                        </div>
+                        <a class="btn sm" th:href="@{/news}">All updates</a>
+                    </div>
+                    <div class="list">
+                        <div class="list-item" th:each="n : ${newsLatest}">
+                            <div style="min-width:0;flex:1">
+                                <h3><a th:href="@{/news/{id}(id=${n.id})}" th:text="${n.title}">Headline</a></h3>
+                                <div class="meta">
+                                    <span class="badge" th:classappend="${n.live} ? 'live' : 'sample'" th:text="${n.live} ? 'Collected' : 'Sample'">Sample</span>
+                                    <span class="badge accent" th:text="${n.category.label}">AI</span>
+                                    <span th:text="${n.region}">Global</span>
+                                    <span th:text="${n.provenance.sourceName}">source</span>
+                                    <span class="mono" th:text="${@fmt.date(n.publishedAt)}">2026-11-10</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="empty-state" th:if="${newsLatest.isEmpty()}">No updates yet — collection runs shortly after startup.</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>Trending in the news</h2><p>Mentions in recent updates</p></div>
+                    </div>
+                    <a class="bar-row" th:each="t : ${newsTrending}" th:href="@{/news(q=${t.term})}" style="color:inherit;text-decoration:none"
+                       th:with="max=${newsTrending[0].count}">
+                        <span class="label" th:text="${t.term}">AI agents</span>
+                        <div class="bar"><span th:style="'width:' + ${t.count * 100 / max} + '%'"></span></div>
+                        <span class="val" th:text="${t.count}">5</span>
+                    </a>
+                    <div class="empty-state" th:if="${newsTrending.isEmpty()}">Not enough updates yet.</div>
+                </div>
+            </section>
+
+            <!-- Growth chart + emerging -->
+            <section class="grid g-main">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2>Technology growth</h2>
+                            <p>Activity index by domain, 2019–2026. Pick up to 4 domains to compare.</p>
+                        </div>
+                    </div>
+                    <div class="chips" id="domain-picker" style="margin-bottom:12px">
+                        <button class="chip" th:each="d : ${domains}" th:data-domain="${d.name}" th:text="${d.name}">AI</button>
+                    </div>
+                    <div class="legend" id="growth-legend"></div>
+                    <div class="chart-box tall"><canvas id="growth-chart" aria-label="Technology growth line chart" role="img"></canvas></div>
+                    <div class="provenance" id="growth-provenance"></div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2>Emerging technologies</h2>
+                            <p>Trial / Assess ring, ranked by YoY growth</p>
+                        </div>
+                        <a class="btn sm" th:href="@{/technologies}">Radar</a>
+                    </div>
+                    <div class="list">
+                        <div class="list-item" th:each="t, s : ${emerging}">
+                            <span class="rank" th:text="${s.count}">1</span>
+                            <div style="flex:1;min-width:0">
+                                <div class="row between">
+                                    <h3><a th:href="@{/technologies/{s}(s=${t.slug})}" th:text="${t.name}">Tech</a></h3>
+                                    <span class="delta up" th:text="'+' + ${#numbers.formatDecimal(t.growthRate, 1, 0)} + '%'">+50%</span>
+                                </div>
+                                <div class="meta">
+                                    <span class="badge" th:classappend="'ring-' + ${t.ring}" th:text="${t.ring.label}">Trial</span>
+                                    <span th:text="${t.domain}">AI</span>
+                                    <span>· momentum <b class="num" th:text="${t.momentum}">90</b></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:replace="~{fragments/layout :: provenance(${emerging.isEmpty() ? null : emerging[0].provenance})}"></div>
+                </div>
+            </section>
+
+            <!-- AI trends / developer market / skills -->
+            <section class="grid g-3">
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>AI industry trends</h2><p>Adoption, investment and agent deployment</p></div>
+                    </div>
+                    <div class="legend" id="ai-legend"></div>
+                    <div class="chart-box"><canvas id="ai-chart" role="img" aria-label="AI industry trends line chart"></canvas></div>
+                    <div class="provenance" id="ai-provenance"></div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>Global developer market</h2><p>Estimated professional developers (thousands)</p></div>
+                    </div>
+                    <div class="chart-box"><canvas id="dev-chart" role="img" aria-label="Developers by country bar chart"></canvas></div>
+                    <div class="provenance" id="dev-provenance"></div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>In-demand skills</h2><p>Demand score 0–100 · YoY growth</p></div>
+                        <a class="btn sm" th:href="@{/work-market#skills}">Market</a>
+                    </div>
+                    <div class="bar-row" th:each="s : ${topSkills}">
+                        <span class="label" th:text="${s.title}">Python</span>
+                        <div class="bar"><span th:style="'width:' + ${s.metricValue} + '%'"></span></div>
+                        <span class="val" th:text="${#numbers.formatDecimal(s.metricValue, 1, 0)}">92</span>
+                    </div>
+                    <div class="row" style="margin-top:12px">
+                        <span class="muted" style="font-size:12px">Fastest growing:</span>
+                        <span class="tag" th:each="s : ${fastestSkills}"
+                              th:text="${s.title} + ' +' + ${#numbers.formatDecimal(s.secondaryValue, 1, 0)} + '%'">AI agents</span>
+                    </div>
+                    <div th:replace="~{fragments/layout :: provenance(${topSkills.isEmpty() ? null : topSkills[0].provenance})}"></div>
+                </div>
+            </section>
+
+            <!-- Country indicators table + latest intelligence -->
+            <section class="grid g-main">
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>Country technology indicators</h2><p>Sample indices 0–100. Click a header to sort, a row to open.</p></div>
+                        <a class="btn sm" th:href="@{/countries}">All countries</a>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data" data-sortable>
+                            <thead>
+                            <tr>
+                                <th data-sort="text">Country</th>
+                                <th data-sort="num">Tech index</th>
+                                <th data-sort="num" class="r">AI</th>
+                                <th data-sort="num" class="r">Talent</th>
+                                <th data-sort="num" class="r">R&amp;D</th>
+                                <th data-sort="num" class="r">Startups</th>
+                                <th data-sort="num" class="r">Infra</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="c : ${countries}" th:data-href="@{/countries/{c}(c=${c.code})}">
+                                <td th:data-value="${c.name}"><span class="flag" th:text="${c.flag}"></span>&nbsp; <b th:text="${c.name}">USA</b></td>
+                                <td th:data-value="${c.techIndex}">
+                                    <div class="row" style="flex-wrap:nowrap">
+                                        <div class="bar" style="flex:1"><span th:style="'width:' + ${c.techIndex} + '%'"></span></div>
+                                        <b class="num" th:text="${c.techIndex}">94</b>
+                                    </div>
+                                </td>
+                                <td class="r num" th:text="${c.aiReadiness}">96</td>
+                                <td class="r num" th:text="${c.developerTalent}">92</td>
+                                <td class="r num" th:text="${c.rndIntensity}">88</td>
+                                <td class="r num" th:text="${c.startupEcosystem}">97</td>
+                                <td class="r num" th:text="${c.digitalInfrastructure}">90</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div th:replace="~{fragments/layout :: provenance(${countries.isEmpty() ? null : countries[0].provenance})}"></div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>Latest intelligence</h2><p>Analyst briefs, newest first</p></div>
+                        <a class="btn sm" th:href="@{/reports}">All</a>
+                    </div>
+                    <div class="list">
+                        <div class="list-item" th:each="r : ${latestReports}">
+                            <div style="min-width:0">
+                                <h3><a th:href="@{/reports/{id}(id=${r.id})}" th:text="${r.title}">Title</a></h3>
+                                <div class="meta">
+                                    <span class="badge accent" th:text="${r.category}">AI</span>
+                                    <span class="badge sample" th:if="${r.provenance.sample}">Sample</span>
+                                    <span class="mono" th:text="${#temporals.format(r.provenance.publishedOn, 'yyyy-MM-dd')}">2026-11-10</span>
+                                    <span th:text="${r.readMinutes} + ' min'">5 min</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"></script>
+<script th:src="@{/js/pages/world-map.js}"></script>
+<script th:src="@{/js/pages/dashboard.js}"></script>
+</body>
+</html>

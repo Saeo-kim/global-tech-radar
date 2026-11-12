@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<!-- Status badge: "Collected" only for articles actually collected from a registered feed. -->
+<span th:fragment="status(n)" class="badge" th:classappend="${n.live} ? 'live' : 'sample'"
+      th:text="${n.live} ? 'Collected' : 'Sample'"
+      th:title="${n.live} ? 'Collected from a registered RSS/Atom feed' : 'Illustrative sample item — not real news'">Sample</span>
+
+<!-- News card. Facts (from the source) and the automated interpretation are visually separated. -->
+<article th:fragment="card(n, brief, countryIndex)" class="card news-card">
+    <div class="row between">
+        <div class="row">
+            <th:block th:replace="~{fragments/news :: status(${n})}"></th:block>
+            <a class="badge accent" th:href="@{/news(category=${n.category.name()})}" th:text="${n.category.label}">AI</a>
+            <span class="badge" th:with="c=${countryIndex[n.region]}">
+                <span class="flag" style="font-size:12px" th:if="${c}" th:text="${c.flag}"></span>
+                <span th:text="${c != null ? c.name : n.region}">Global</span></span>
+        </div>
+        <span class="importance" th:title="'Importance score ' + ${n.importance} + '/100 (rule-based)'">
+            <span class="imp-track"><i th:style="'width:' + ${n.importance} + '%'"></i></span><b class="num" th:text="${n.importance}">70</b></span>
+    </div>
+    <h3 class="news-title"><a th:href="@{/news/{id}(id=${n.id})}" th:text="${n.title}">Headline</a></h3>
+    <div class="facts">
+        <div class="facts-label">Source summary</div>
+        <p class="clamp" th:text="${n.summary != null and !n.summary.isBlank()} ? ${n.summary} : 'The source did not provide a summary.'">Summary</p>
+        <div class="chips" th:unless="${n.companyList.isEmpty()}">
+            <span class="tag" th:each="c : ${n.companyList}" th:text="${c}">Company</span>
+        </div>
+        <div class="meta">
+            <span th:text="${n.provenance.sourceName}">Source</span> ·
+            <span class="mono" th:text="${@fmt.date(n.publishedAt)}">2026-11-10</span>
+            <a th:if="${n.provenance.sourceUrl}" th:href="${n.provenance.sourceUrl}" target="_blank" rel="noopener noreferrer"
+               class="orig-link">Original article
+                <th:block th:replace="~{fragments/layout :: icon('external')}"></th:block></a>
+            <span th:unless="${n.provenance.sourceUrl}" class="muted">No original article (sample)</span>
+        </div>
+    </div>
+    <div class="interp" th:if="${brief}">
+        <div class="interp-label">Automated interpretation</div>
+        <p><b>Impact:</b> <span th:text="${brief.impact}"></span></p>
+        <p><b>Applications:</b> <span th:text="${brief.applications}"></span></p>
+    </div>
+    <a class="btn sm" th:href="@{/news/{id}(id=${n.id})}" style="align-self:flex-start">Intelligence analysis →</a>
+</article>
+
+</body>
+</html>

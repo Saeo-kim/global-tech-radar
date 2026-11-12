@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head(${tech.name})}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="breadcrumb"><a th:href="@{/technologies}">Technology Radar</a> /
+                        <a th:href="@{/technologies(domain=${tech.domain})}" th:text="${tech.domain}"></a> / <span th:text="${tech.name}"></span></div>
+                    <h1 th:text="${tech.name}">Tech</h1>
+                    <div class="row" style="margin-top:8px">
+                        <span class="badge" th:classappend="'ring-' + ${tech.ring}" th:text="${tech.ring.label}"></span>
+                        <span class="badge" th:text="${tech.quadrant.label}"></span>
+                        <span class="muted" th:text="${tech.ring.description}"></span>
+                    </div>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: sampleBanner}"></div>
+
+            <section class="grid g-4">
+                <div class="card kpi"><span class="kpi-label">Maturity</span><span class="kpi-value" th:text="${tech.maturity}"></span><div class="bar"><span th:style="'width:' + ${tech.maturity} + '%'"></span></div></div>
+                <div class="card kpi"><span class="kpi-label">Momentum</span><span class="kpi-value" th:text="${tech.momentum}"></span><div class="bar"><span th:style="'width:' + ${tech.momentum} + '%'"></span></div></div>
+                <div class="card kpi"><span class="kpi-label">Market demand</span><span class="kpi-value" th:text="${tech.marketDemand}"></span><div class="bar"><span th:style="'width:' + ${tech.marketDemand} + '%'"></span></div></div>
+                <div class="card kpi"><span class="kpi-label">Growth YoY</span>
+                    <span class="kpi-value"><span th:text="(${tech.growthRate >= 0} ? '+' : '') + ${#numbers.formatDecimal(tech.growthRate, 1, 0)}"></span><small>%</small></span>
+                    <span class="kpi-foot">Sample posting / activity growth</span></div>
+            </section>
+
+            <section class="grid g-main">
+                <div class="card">
+                    <div class="card-head"><div><h2>Assessment</h2></div></div>
+                    <p class="text-2" style="font-size:14.5px;line-height:1.7" th:text="${tech.description}"></p>
+                    <h3 style="margin:18px 0 8px">Key signals</h3>
+                    <ul class="text-2" style="padding-left:18px;margin:0">
+                        <li th:each="s : ${tech.keySignalList}" th:text="${s}" style="margin-bottom:6px"></li>
+                    </ul>
+                    <h3 style="margin:18px 0 8px">Related skills</h3>
+                    <div class="chips"><span class="tag" th:each="s : ${tech.relatedSkillList}" th:text="${s}"></span></div>
+                    <h3 style="margin:18px 0 8px" th:text="${tech.domain} + ' domain activity'">Domain trend</h3>
+                    <div class="chart-box short"><canvas id="domain-trend" th:data-domain="${tech.domain}" role="img" aria-label="Domain trend"></canvas></div>
+                    <div class="provenance" id="domain-trend-provenance"></div>
+                </div>
+                <div class="stack">
+                    <div class="card">
+                        <div class="card-head"><div><h2>Leading countries</h2></div></div>
+                        <div class="list">
+                            <a class="list-item" th:each="c : ${leadingCountries}" th:href="@{/countries/{c}(c=${c.code})}" style="color:inherit">
+                                <span class="flag" th:text="${c.flag}"></span>
+                                <div style="flex:1"><b th:text="${c.name}"></b><div class="meta" th:text="'Tech index ' + ${c.techIndex}"></div></div>
+                            </a>
+                            <div class="muted" th:if="${leadingCountries.isEmpty()}">Broadly distributed.</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head"><div><h2>Companies active here</h2></div></div>
+                        <div class="chips">
+                            <a class="chip" th:each="c : ${companies}" th:href="@{/companies/{s}(s=${c.slug})}" th:text="${c.name}"></a>
+                            <span class="muted" th:if="${companies.isEmpty()}">None in the tracked set.</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head"><div><h2>Same domain</h2></div></div>
+                        <div class="list">
+                            <div class="list-item" th:each="o : ${siblings}">
+                                <div style="flex:1"><h3><a th:href="@{/technologies/{s}(s=${o.slug})}" th:text="${o.name}"></a></h3></div>
+                                <span class="badge" th:classappend="'ring-' + ${o.ring}" th:text="${o.ring.label}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" th:unless="${reports.isEmpty()}">
+                        <div class="card-head"><div><h2>Related intelligence</h2></div></div>
+                        <div class="list">
+                            <div class="list-item" th:each="r : ${reports}">
+                                <div><h3><a th:href="@{/reports/{id}(id=${r.id})}" th:text="${r.title}"></a></h3>
+                                    <div class="meta"><span class="badge sample">Sample</span><span class="mono" th:text="${r.provenance.publishedOn}"></span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div th:replace="~{fragments/layout :: provenance(${tech.provenance})}"></div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const c = document.getElementById('domain-trend');
+    const trend = await GTR.fetchJSON('/api/trends/technology?keys=' + encodeURIComponent(c.dataset.domain));
+    GTR.lineChart(c, trend, { fill: true, colorOf: () => GTR.accent(), max: 100 });
+    GTR.provenanceLine(document.getElementById('domain-trend-provenance'), trend);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head(${report.title})}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="breadcrumb"><a th:href="@{/reports}">Intelligence Reports</a> / <span th:text="${report.category}"></span></div>
+            <section class="grid g-main">
+                <article class="card article" style="max-width:none">
+                    <div class="row" style="margin-bottom:12px">
+                        <span class="badge accent" th:text="${report.category}"></span>
+                        <span class="badge" th:text="${country != null ? country.flag + ' ' + country.name : report.region}"></span>
+                        <span class="badge" th:classappend="${report.provenance.sample} ? 'sample' : 'live'" th:text="${report.provenance.dataStatus.label}"></span>
+                    </div>
+                    <h1 style="font-size:28px;line-height:1.25;margin-bottom:10px" th:text="${report.title}"></h1>
+                    <p class="muted" style="font-size:13px;margin-bottom:22px">
+                        <span th:text="${report.provenance.sourceName}"></span> ·
+                        Published <span class="mono" th:text="${#temporals.format(report.provenance.publishedOn, 'yyyy-MM-dd')}"></span> ·
+                        <span th:text="${report.readMinutes} + ' min read'"></span></p>
+                    <div class="sample-banner" th:if="${report.provenance.sample}" style="margin-bottom:20px">
+                        <th:block th:replace="~{fragments/layout :: icon('info')}"></th:block>
+                        <span><strong>Sample brief.</strong> Written for demonstration from general, widely discussed industry themes.
+                            It does not report specific real events and should not be cited.</span>
+                    </div>
+                    <p class="summary" th:text="${report.summary}"></p>
+                    <p th:each="para : ${report.paragraphs}" th:text="${para}"></p>
+                    <div class="chips"><span class="tag" th:each="t : ${report.tagList}" th:text="'#' + ${t}"></span></div>
+                    <div th:replace="~{fragments/layout :: provenance(${report.provenance})}"></div>
+                </article>
+                <div class="stack">
+                    <div class="card" th:unless="${technologies.isEmpty()}">
+                        <div class="card-head"><div><h2>Technologies in this brief</h2></div></div>
+                        <div class="list">
+                            <div class="list-item" th:each="t : ${technologies}">
+                                <div style="flex:1"><h3><a th:href="@{/technologies/{s}(s=${t.slug})}" th:text="${t.name}"></a></h3>
+                                    <div class="meta" th:text="${t.domain}"></div></div>
+                                <span class="badge" th:classappend="'ring-' + ${t.ring}" th:text="${t.ring.label}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head"><div><h2>More briefs</h2></div></div>
+                        <div class="list">
+                            <div class="list-item" th:each="m : ${more}">
+                                <div><h3><a th:href="@{/reports/{id}(id=${m.id})}" th:text="${m.title}"></a></h3>
+                                    <div class="meta"><span th:text="${m.category}"></span><span class="mono" th:text="${m.provenance.publishedOn}"></span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

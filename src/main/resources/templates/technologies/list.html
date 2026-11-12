@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head('Technology Radar')}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">Technology Radar</div>
+                    <h1>What to adopt, trial, assess or hold</h1>
+                    <p class="lead">Eleven technology domains and the individual technologies within them, positioned by
+                        readiness ring and quadrant. Click any blip for details.</p>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: sampleBanner}"></div>
+
+            <!-- domain cards -->
+            <section class="grid g-4" id="domain-cards">
+                <button type="button" class="card domain-card" th:each="d, s : ${domains}" th:data-domain="${d.name}"
+                        th:classappend="${selectedDomain == d.name} ? 'active'" style="text-align:left;font:inherit;color:inherit">
+                    <div class="top">
+                        <h3 th:text="${d.name}">AI</h3>
+                        <span class="delta" th:classappend="${d.indexChange >= 0} ? 'up' : 'down'"
+                              th:text="(${d.indexChange >= 0} ? '+' : '') + ${#numbers.formatDecimal(d.indexChange, 1, 1)}">+9</span>
+                    </div>
+                    <div class="row between">
+                        <span class="idx" th:text="${#numbers.formatDecimal(d.currentIndex, 1, 0)}">95</span>
+                        <div class="spark" style="width:55%"><canvas th:data-spark="${d.name}"></canvas></div>
+                    </div>
+                    <p th:text="${d.description}">desc</p>
+                    <div class="row between" style="font-size:12px">
+                        <span class="muted" th:text="${d.technologyCount} + ' technologies'">3</span>
+                        <span class="muted">Demand <b class="num" th:text="${d.avgDemand}">80</b></span>
+                    </div>
+                </button>
+            </section>
+
+            <!-- radar + detail -->
+            <section class="radar-layout">
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>Radar</h2><p id="radar-count">Showing all technologies</p></div>
+                        <div class="actions">
+                            <button class="chip active" data-ring="">All rings</button>
+                            <button class="chip" th:each="r : ${rings}" th:data-ring="${r.name()}" th:text="${r.label}">Adopt</button>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-bottom:8px">
+                        <input type="search" id="radar-search" placeholder="Search technologies…" style="max-width:280px">
+                        <button class="btn sm ghost" id="clear-domain" type="button">Clear domain filter</button>
+                    </div>
+                    <svg id="radar" class="radar-svg" viewBox="0 0 640 640" role="img" aria-label="Technology radar"></svg>
+                    <div class="legend" style="justify-content:center;margin-top:6px">
+                        <span th:each="r : ${rings}"><i th:class="'ring-dot-' + ${r.name()}"></i><span th:text="${r.label} + ' — ' + ${r.description}"></span></span>
+                    </div>
+                </div>
+                <div class="stack">
+                    <div class="card detail-panel" id="tech-detail" aria-live="polite">
+                        <div class="empty">Select a blip on the radar or a row in the table.</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head"><div><h2>Maturity vs momentum</h2><p>Top-right = mature and accelerating</p></div></div>
+                        <div class="chart-box"><canvas id="scatter" role="img" aria-label="Maturity versus momentum scatter"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- table -->
+            <section class="card">
+                <div class="card-head"><div><h2>All technologies</h2><p>Sortable · click a row to open the profile</p></div></div>
+                <div class="table-wrap">
+                    <table class="data" data-sortable id="tech-table">
+                        <thead>
+                        <tr><th data-sort="num">#</th><th data-sort="text">Technology</th><th data-sort="text">Domain</th><th data-sort="text">Ring</th>
+                            <th data-sort="num" class="r">Maturity</th><th data-sort="num" class="r">Momentum</th>
+                            <th data-sort="num" class="r">Demand</th><th data-sort="num" class="r">Growth YoY</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="t, s : ${technologies}" th:data-href="@{/technologies/{s}(s=${t.slug})}" th:data-slug="${t.slug}"
+                            th:data-domain="${t.domain}" th:data-ring="${t.ring.name()}">
+                            <td class="num muted" th:data-value="${s.count}" th:text="${s.count}">1</td>
+                            <td><b th:text="${t.name}">Name</b></td>
+                            <td th:text="${t.domain}">AI</td>
+                            <td th:data-value="${t.ring.ordinal()}"><span class="badge" th:classappend="'ring-' + ${t.ring}" th:text="${t.ring.label}"></span></td>
+                            <td class="r num" th:text="${t.maturity}"></td>
+                            <td class="r num" th:text="${t.momentum}"></td>
+                            <td class="r num" th:text="${t.marketDemand}"></td>
+                            <td class="r num" th:data-value="${t.growthRate}">
+                                <span class="delta" th:classappend="${t.growthRate >= 0} ? 'up' : 'down'"
+                                      th:text="(${t.growthRate >= 0} ? '+' : '') + ${#numbers.formatDecimal(t.growthRate, 1, 0)} + '%'"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:replace="~{fragments/layout :: provenance(${technologies.isEmpty() ? null : technologies[0].provenance})}"></div>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:inline="javascript">window.GTR_SELECTED_DOMAIN = /*[[${selectedDomain}]]*/ '';</script>
+<script th:src="@{/js/pages/technologies.js}"></script>
+</body>
+</html>

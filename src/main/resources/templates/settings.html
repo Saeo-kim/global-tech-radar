@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head('Settings')}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">Settings</div>
+                    <h1>Workspace settings</h1>
+                    <p class="lead">Profile, display preferences, data sources and future API integrations.</p>
+                </div>
+            </div>
+
+            <section class="grid g-2">
+                <form class="card" th:action="@{/settings}" method="post">
+                    <div class="card-head"><div><h2>Profile &amp; display</h2><p>Stored in the database</p></div></div>
+                    <div class="form-grid">
+                        <label class="field">Display name <input type="text" name="displayName" maxlength="60" th:value="${settings['profile.displayName']}"></label>
+                        <label class="field">Home country
+                            <select name="homeCountry">
+                                <option th:each="c : ${countries}" th:value="${c.code}" th:text="${c.flag + ' ' + c.name}"
+                                        th:selected="${c.code == settings['profile.homeCountry']}"></option>
+                            </select></label>
+                        <label class="field full">Target role <input type="text" name="targetRole" maxlength="80" th:value="${settings['profile.targetRole']}"></label>
+                        <div class="field full">Accent colour
+                            <div class="chips">
+                                <label class="chip" th:each="a : ${accents}" style="text-transform:capitalize">
+                                    <input type="radio" name="accent" th:value="${a}" th:checked="${a == settings['ui.accent']}" style="accent-color:var(--accent)">
+                                    <span th:text="${a}"></span></label>
+                            </div>
+                        </div>
+                        <label class="toggle full">
+                            <input type="checkbox" name="showSampleBanner" value="true" th:checked="${settings['ui.showSampleBanner'] == 'true'}">
+                            Show the sample-data banner on every page (sample badges on each data block always remain)
+                        </label>
+                        <button class="btn primary full" type="submit">Save settings</button>
+                    </div>
+                </form>
+
+                <div class="card" id="data">
+                    <div class="card-head"><div><h2>Data source</h2><p>Active intelligence provider</p></div></div>
+                    <div class="list">
+                        <div class="list-item" th:each="p : ${providers}">
+                            <div style="flex:1">
+                                <div class="row between"><b th:text="${p.displayName()}"></b>
+                                    <span class="badge" th:classappend="${p.dataStatus().name() == 'SAMPLE'} ? 'sample' : 'live'" th:text="${p.dataStatus().label}"></span></div>
+                                <div class="meta"><span>id: <code th:text="${p.id()}"></code></span>
+                                    <span class="badge accent" th:if="${p.id() == provider.id()}">Active</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-2" style="font-size:13px;margin:10px 0">
+                        Sample values are hand-authored illustrations, not measurements. Each record stores its source name, publication date
+                        and the planned real-world source that a live integration would replace it with.
+                        <span th:if="${lastLoadedAt}">Last loaded: <b class="mono" th:text="${lastLoadedAt}"></b>.</span>
+                    </p>
+                    <form th:action="@{/settings/reload-data}" method="post"
+                          data-confirm="Reload all intelligence records from the active provider? Your skills, projects, goals and settings are kept.">
+                        <button class="btn" type="submit"><th:block th:replace="~{fragments/layout :: icon('refresh')}"></th:block> Reload intelligence data</button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head"><div><h2>API integrations</h2><p>Prepared slots for live data — configured in <code>application.yml</code> / environment variables</p></div></div>
+                <div class="table-wrap">
+                    <table class="data">
+                        <thead><tr><th>Integration</th><th>Feeds</th><th>Base URL</th><th>API key</th><th>Status</th></tr></thead>
+                        <tbody>
+                        <tr th:each="i : ${integrations}">
+                            <td><b th:text="${i.name()}"></b><div class="muted mono" style="font-size:11px" th:text="${i.id()}"></div></td>
+                            <td th:text="${i.domain()}"></td>
+                            <td class="mono" style="font-size:12px" th:text="${i.baseUrl() == null or i.baseUrl().isBlank()} ? '—' : ${i.baseUrl()}"></td>
+                            <td><span class="badge" th:text="${i.hasApiKey()} ? 'Provided' : 'Not set'"></span></td>
+                            <td><span class="badge" th:classappend="${i.configured} ? 'live'" th:text="${i.configured} ? 'Enabled' : 'Not connected'"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="muted" style="font-size:12.5px;margin-top:12px">To connect a live source, implement <code>IntelligenceDataProvider</code>,
+                    register it as a Spring bean and set <code>RADAR_DATA_PROVIDER</code> to its id. See README → "Adding a live data provider".</p>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <div><h2>News collection</h2><p>RSS / Atom feeds for Global Tech Updates</p></div>
+                    <a class="btn sm" th:href="@{/news/sources}">Manage news sources →</a>
+                </div>
+                <p class="text-2" style="font-size:13px">Feeds are registered in <code>radar.news.feeds</code> or on the News Sources page.
+                    Collection runs on a schedule (<code>RADAR_NEWS_INTERVAL</code>, default 1 hour) and can be triggered manually.
+                    Collected articles keep their original URL and publication date and are labelled <span class="badge live">Collected</span>;
+                    demo items are labelled <span class="badge sample">Sample</span>.</p>
+            </section>
+
+            <section class="card">
+                <div class="card-head"><div><h2>JSON API</h2><p>Endpoints used by the dashboard charts</p></div></div>
+                <div class="chips">
+                    <a class="chip mono" th:each="e : ${ {'/api/meta','/api/countries','/api/technologies','/api/domains','/api/companies','/api/market/skill_demand','/api/trends/technology','/api/reports','/api/position/analysis','/api/news','/api/news/trending','/api/news/sources'} }"
+                       th:href="${e}" th:text="${e}" target="_blank"></a>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

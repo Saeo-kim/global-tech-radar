@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head('My Technology Position')}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">My Technology Position</div>
+                    <h1>Your skills against the market</h1>
+                    <p class="lead">Register your skills, projects and career goals. The analysis compares your proficiency with
+                        market demand and recommends what to learn next.</p>
+                </div>
+                <form th:if="${skills.isEmpty()}" th:action="@{/position/example}" method="post">
+                    <button class="btn" type="submit">Load example profile</button>
+                </form>
+            </div>
+            <div class="sample-banner" th:if="${isSampleData}" role="note">
+                <th:block th:replace="~{fragments/layout :: icon('info')}"></th:block>
+                <span>Your profile is <strong style="color:var(--text)">your own data</strong>. Market demand it is compared
+                    against comes from the <strong>sample</strong> dataset, so treat the gap analysis as a demonstration.</span>
+            </div>
+
+            <!-- analysis -->
+            <section class="grid g-main-r">
+                <div class="card" style="display:flex;flex-direction:column;gap:16px">
+                    <div class="card-head" style="margin:0"><div><h2>Market alignment</h2><p>Share of market demand your levels cover</p></div></div>
+                    <div class="gauge" th:with="pct=${analysis.alignmentScore}">
+                        <svg viewBox="0 0 120 120" aria-hidden="true">
+                            <circle cx="60" cy="60" r="52" fill="none" stroke="#1a2b48" stroke-width="10"/>
+                            <circle th:if="${pct > 0}" cx="60" cy="60" r="52" fill="none" stroke="url(#gauge-grad)" stroke-width="10" stroke-linecap="round"
+                                    th:attr="stroke-dasharray=${#numbers.formatDecimal(3.267 * pct, 1, 1)} + ' 326.7'"/>
+                            <defs><linearGradient id="gauge-grad"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+                        </svg>
+                        <div class="val"><div><b th:text="${pct}">0</b><span>/ 100</span></div></div>
+                    </div>
+                    <div class="grid g-3" style="gap:10px">
+                        <div class="score"><span>Your skills</span><b th:text="${analysis.skillsTracked}">0</b></div>
+                        <div class="score"><span>Market covered</span><b th:text="${analysis.marketSkillsCovered} + '/' + ${analysis.comparisons.size()}">0</b></div>
+                        <div class="score"><span>At/above demand</span><b th:text="${analysis.strongSkills}">0</b></div>
+                    </div>
+                    <div th:unless="${analysis.goalSkillsMissing.isEmpty()}">
+                        <div class="muted" style="font-size:12px;margin-bottom:6px">Goal skills not yet in your profile</div>
+                        <div class="chips"><span class="badge status-Missing" th:each="s : ${analysis.goalSkillsMissing}" th:text="${s}"></span></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>You vs market demand</h2><p>Top skills by priority · your level = proficiency × 20</p></div>
+                    </div>
+                    <div class="legend" id="gap-legend"></div>
+                    <div class="chart-box tall"><canvas id="gap-chart" role="img" aria-label="Skill level versus market demand"></canvas></div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head"><div><h2>Learning recommendations</h2><p>Highest-priority gaps, weighted by demand, growth and your goals</p></div></div>
+                <div class="grid g-3" th:unless="${analysis.recommendations.isEmpty()}">
+                    <div class="rec" th:each="r, s : ${analysis.recommendations}">
+                        <div class="row between">
+                            <h3 th:text="${s.count} + '. ' + ${r.skill}">Skill</h3>
+                            <span class="badge accent" th:text="'Gap ' + ${r.gap}">Gap</span>
+                        </div>
+                        <p class="why" th:text="${r.reason}"></p>
+                        <th:block th:if="${r.path}">
+                            <div class="row between"><b style="font-size:13px" th:text="${r.path.title}"></b>
+                                <span class="muted" style="font-size:12px" th:text="'~' + ${r.path.estimatedWeeks} + ' weeks'"></span></div>
+                            <ol><li th:each="st : ${r.path.stepList}" th:text="${st}"></li></ol>
+                        </th:block>
+                    </div>
+                </div>
+                <div class="empty-state" th:if="${analysis.recommendations.isEmpty()}">
+                    <span th:if="${skills.isEmpty()}">Add skills below to get recommendations.</span>
+                    <span th:unless="${skills.isEmpty()}">No gaps against tracked market skills — impressive.</span>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head"><div><h2>Skill gap table</h2><p>Every tracked market skill · sortable</p></div></div>
+                <div class="table-wrap">
+                    <table class="data" data-sortable>
+                        <thead><tr><th data-sort="text">Skill</th><th data-sort="text">Area</th><th data-sort="num" class="r">Demand</th>
+                            <th data-sort="num" class="r">Growth</th><th data-sort="num">Your level</th><th data-sort="num" class="r">Gap</th>
+                            <th data-sort="num" class="r">Priority</th><th data-sort="text">Status</th></tr></thead>
+                        <tbody>
+                        <tr th:each="c : ${analysis.comparisons}">
+                            <td><b th:text="${c.skill}"></b> <span class="badge accent" th:if="${c.goalSkill}">Goal</span></td>
+                            <td class="muted" th:text="${c.category}"></td>
+                            <td class="r num" th:text="${c.marketDemand}"></td>
+                            <td class="r num" th:data-value="${c.marketGrowth}" th:text="'+' + ${#numbers.formatDecimal(c.marketGrowth, 1, 0)} + '%'"></td>
+                            <td th:data-value="${c.userProficiency}"><span class="level-dots"><i th:each="i : ${#numbers.sequence(1, 5)}" th:classappend="${i <= c.userProficiency} ? 'on'"></i></span></td>
+                            <td class="r num" th:text="${c.gap}"></td>
+                            <td class="r num" th:text="${c.priority}"></td>
+                            <td th:data-value="${c.status}"><span class="badge" th:classappend="'status-' + ${c.status}" th:text="${c.status}"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:replace="~{fragments/layout :: provenance(${marketSkills.isEmpty() ? null : marketSkills[0].provenance})}"></div>
+            </section>
+
+            <!-- profile management -->
+            <section class="grid g-3">
+                <!-- skills -->
+                <div class="card" id="skills">
+                    <div class="card-head"><div><h2>My skills</h2><p>Same name updates the existing entry</p></div></div>
+                    <form th:action="@{/position/skills}" th:object="${skillForm}" method="post" class="form-grid">
+                        <label class="field full">Skill
+                            <input type="text" th:field="*{name}" list="market-skill-list" placeholder="e.g. Kubernetes" required maxlength="80">
+                            <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span></label>
+                        <datalist id="market-skill-list"><option th:each="m : ${marketSkills}" th:value="${m.title}"></option></datalist>
+                        <label class="field">Category
+                            <select th:field="*{category}">
+                                <option th:each="cat : ${ {'General','Language','Backend','Frontend','Cloud','DevOps','Data','AI','Security','Hardware'} }" th:value="${cat}" th:text="${cat}"></option>
+                            </select></label>
+                        <label class="field">Years
+                            <input type="number" th:field="*{yearsExperience}" min="0" max="50" step="0.5"></label>
+                        <label class="field full">Proficiency: <b id="prof-label">3 · Intermediate</b>
+                            <input type="range" th:field="*{proficiency}" min="1" max="5" step="1" id="prof-range"></label>
+                        <button class="btn primary full" type="submit"><th:block th:replace="~{fragments/layout :: icon('plus')}"></th:block> Save skill</button>
+                    </form>
+                    <div class="list" style="margin-top:14px">
+                        <div class="list-item" th:each="s : ${skills}" style="align-items:center">
+                            <div style="flex:1;min-width:0">
+                                <b th:text="${s.name}"></b>
+                                <div class="meta"><span th:text="${s.category}"></span><span th:text="${s.yearsExperience} + ' yrs'"></span><span th:text="${s.proficiencyLabel}"></span></div>
+                            </div>
+                            <span class="level-dots"><i th:each="i : ${#numbers.sequence(1, 5)}" th:classappend="${i <= s.proficiency} ? 'on'"></i></span>
+                            <form th:action="@{/position/skills/{id}/delete(id=${s.id})}" method="post">
+                                <button class="icon-btn" type="submit" th:attr="aria-label='Remove ' + ${s.name}" title="Remove"><th:block th:replace="~{fragments/layout :: icon('x')}"></th:block></button>
+                            </form>
+                        </div>
+                        <div class="empty-state" th:if="${skills.isEmpty()}">No skills yet.</div>
+                    </div>
+                </div>
+
+                <!-- projects -->
+                <div class="card" id="projects">
+                    <div class="card-head"><div><h2>My projects</h2><p>Evidence for your skills</p></div></div>
+                    <form th:action="@{/position/projects}" th:object="${projectForm}" method="post" class="form-grid">
+                        <label class="field full">Project name
+                            <input type="text" th:field="*{name}" required maxlength="120">
+                            <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span></label>
+                        <label class="field">Your role <input type="text" th:field="*{role}" maxlength="80" placeholder="Backend lead"></label>
+                        <label class="field">Link <input type="text" th:field="*{url}" maxlength="400" placeholder="https://…">
+                            <span class="field-error" th:if="${#fields.hasErrors('url')}" th:errors="*{url}"></span></label>
+                        <label class="field full">Tech stack (comma separated) <input type="text" th:field="*{techStack}" maxlength="400" placeholder="Java, Spring Boot, MySQL"></label>
+                        <label class="field full">Description <textarea th:field="*{description}" maxlength="1000"></textarea></label>
+                        <button class="btn primary full" type="submit"><th:block th:replace="~{fragments/layout :: icon('plus')}"></th:block> Save project</button>
+                    </form>
+                    <div class="list" style="margin-top:14px">
+                        <div class="list-item" th:each="p : ${projects}">
+                            <div style="flex:1;min-width:0">
+                                <div class="row between"><b th:text="${p.name}"></b>
+                                    <form th:action="@{/position/projects/{id}/delete(id=${p.id})}" method="post">
+                                        <button class="icon-btn" type="submit" title="Remove" th:attr="aria-label='Remove ' + ${p.name}"><th:block th:replace="~{fragments/layout :: icon('x')}"></th:block></button></form></div>
+                                <div class="meta"><span th:text="${p.role}"></span><a th:if="${p.url != null and !p.url.isBlank()}" th:href="${p.url}" target="_blank" rel="noopener">link ↗</a></div>
+                                <p th:text="${p.description}"></p>
+                                <div class="chips" style="margin-top:6px"><span class="tag" th:each="t : ${p.techStackList}" th:text="${t}"></span></div>
+                            </div>
+                        </div>
+                        <div class="empty-state" th:if="${projects.isEmpty()}">No projects yet.</div>
+                    </div>
+                </div>
+
+                <!-- goals -->
+                <div class="card" id="goals">
+                    <div class="card-head"><div><h2>Career goals</h2><p>Required skills feed the gap analysis</p></div></div>
+                    <form th:action="@{/position/goals}" th:object="${goalForm}" method="post" class="form-grid">
+                        <label class="field full">Goal
+                            <input type="text" th:field="*{title}" required maxlength="160" placeholder="Join an AI platform team">
+                            <span class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span></label>
+                        <label class="field">Target role <input type="text" th:field="*{targetRole}" maxlength="80" placeholder="ML Engineer"></label>
+                        <label class="field">Target date <input type="date" th:field="*{targetDate}"></label>
+                        <label class="field full">Target region
+                            <select th:field="*{targetRegion}">
+                                <option value="Global">Global / remote</option>
+                                <option th:each="r : ${ {'US','CN','JP','KR','IN','DE','GB','FR','SG'} }" th:value="${r}" th:text="${r}"></option>
+                            </select></label>
+                        <label class="field full">Required skills (comma separated)
+                            <input type="text" th:field="*{requiredSkills}" maxlength="400" placeholder="Python, AI agents, Kubernetes"></label>
+                        <button class="btn primary full" type="submit"><th:block th:replace="~{fragments/layout :: icon('plus')}"></th:block> Save goal</button>
+                    </form>
+                    <div class="list" style="margin-top:14px">
+                        <div class="list-item" th:each="g : ${goals}">
+                            <div style="flex:1;min-width:0">
+                                <div class="row between"><b th:text="${g.title}"></b>
+                                    <form th:action="@{/position/goals/{id}/delete(id=${g.id})}" method="post">
+                                        <button class="icon-btn" type="submit" title="Remove" th:attr="aria-label='Remove ' + ${g.title}"><th:block th:replace="~{fragments/layout :: icon('x')}"></th:block></button></form></div>
+                                <div class="meta"><span th:text="${g.targetRole}"></span><span th:text="${g.targetRegion}"></span>
+                                    <span class="mono" th:if="${g.targetDate}" th:text="${g.targetDate}"></span></div>
+                                <div class="chips" style="margin:6px 0"><span class="tag" th:each="s : ${g.requiredSkillList}" th:text="${s}"></span></div>
+                                <form th:action="@{/position/goals/{id}/status(id=${g.id})}" method="post" class="row">
+                                    <select name="status" style="width:auto" onchange="this.form.submit()" aria-label="Goal status">
+                                        <option th:each="st : ${goalStatuses}" th:value="${st.name()}" th:text="${st.label}" th:selected="${st == g.status}"></option>
+                                    </select>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="empty-state" th:if="${goals.isEmpty()}">No goals yet.</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/pages/position.js}"></script>
+</body>
+</html>

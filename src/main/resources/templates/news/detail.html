@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head(${item.title})}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="breadcrumb"><a th:href="@{/news}">Global Tech Updates</a> /
+                <a th:href="@{/news(category=${item.category.name()})}" th:text="${item.category.label}"></a></div>
+
+            <div class="page-head">
+                <div style="max-width:980px">
+                    <div class="row" style="margin-bottom:10px">
+                        <th:block th:replace="~{fragments/news :: status(${item})}"></th:block>
+                        <span class="badge accent" th:text="${item.category.label}"></span>
+                        <span class="badge" th:text="${country != null ? country.flag + ' ' + country.name : item.region}"></span>
+                        <span class="badge" th:text="'Importance ' + ${item.importance} + '/100'"></span>
+                    </div>
+                    <h1 style="font-size:26px;line-height:1.3" th:text="${item.title}">Headline</h1>
+                </div>
+                <a th:if="${item.provenance.sourceUrl}" class="btn primary" th:href="${item.provenance.sourceUrl}" target="_blank" rel="noopener noreferrer">
+                    Read original article <th:block th:replace="~{fragments/layout :: icon('external')}"></th:block></a>
+            </div>
+
+            <div class="sample-banner" th:unless="${item.live}" role="note">
+                <th:block th:replace="~{fragments/layout :: icon('info')}"></th:block>
+                <span><strong>Sample item.</strong> Illustrative demo content describing a broad trend. It is not a real news
+                    report, has no original article and should not be cited.</span>
+            </div>
+
+            <section class="grid g-main">
+                <div class="stack" style="gap:18px">
+                    <!-- 1. FACTS -->
+                    <div class="card facts-card">
+                        <div class="section-tag facts-tag">Source facts · as reported</div>
+                        <h2 style="margin:6px 0 12px">1. What happened?</h2>
+                        <p class="text-2" style="font-size:15px;line-height:1.75"
+                           th:text="${item.summary != null and !item.summary.isBlank()} ? ${item.summary} : 'The source did not provide a summary. Open the original article for details.'"></p>
+                        <table class="data" style="margin-top:14px">
+                            <tbody>
+                            <tr><td class="muted">Original source</td><td><b th:text="${item.provenance.sourceName}"></b>
+                                <span class="muted" th:if="${item.sourceType}" th:text="' · ' + ${item.sourceType.label}"></span></td></tr>
+                            <tr><td class="muted">Source URL</td><td>
+                                <a th:if="${item.provenance.sourceUrl}" th:href="${item.provenance.sourceUrl}" target="_blank" rel="noopener noreferrer"
+                                   class="mono" style="word-break:break-all;font-size:12px" th:text="${item.provenance.sourceUrl}"></a>
+                                <span th:unless="${item.provenance.sourceUrl}" class="muted">None — sample item</span></td></tr>
+                            <tr><td class="muted">Publication date</td><td class="mono" th:text="${@fmt.time(item.publishedAt)}"></td></tr>
+                            <tr th:if="${item.live}"><td class="muted">Collected</td><td class="mono" th:text="${@fmt.time(item.collectedAt)}"></td></tr>
+                            <tr><td class="muted">Country / region</td><td th:text="${country != null ? country.name : item.region}"></td></tr>
+                            <tr><td class="muted">Companies mentioned</td><td>
+                                <span class="chips"><span class="tag" th:each="c : ${item.companyList}" th:text="${c}"></span></span>
+                                <span class="muted" th:if="${item.companyList.isEmpty()}">None detected</span></td></tr>
+                            <tr><td class="muted">Technology category</td><td th:text="${item.category.label}"></td></tr>
+                            </tbody>
+                        </table>
+                        <p class="muted" style="font-size:12px;margin-top:10px">Category, region and companies are detected automatically from the headline and summary.</p>
+                    </div>
+
+                    <!-- 2-7. INTERPRETATION -->
+                    <div class="card interp-card">
+                        <div class="section-tag interp-tag">Automated interpretation · not from the source</div>
+                        <p class="muted" style="font-size:12.5px;margin:6px 0 4px" th:text="${analysis.disclaimer}"></p>
+                        <p class="muted" style="font-size:12px">Method: <span th:text="${analysis.method}"></span></p>
+
+                        <div class="qa">
+                            <h3>2. Why does it matter?</h3>
+                            <p th:text="${analysis.whyItMatters}"></p>
+                        </div>
+                        <div class="qa">
+                            <h3>3. Which industries are affected?</h3>
+                            <div class="chips"><span class="tag" th:each="i : ${analysis.industries}" th:text="${i}"></span></div>
+                        </div>
+                        <div class="qa">
+                            <h3>4. Which companies are involved?</h3>
+                            <div class="chips" th:unless="${analysis.involvedCompanies.isEmpty()}">
+                                <th:block th:each="c : ${analysis.involvedCompanies}">
+                                    <a class="chip" th:if="${companySlugs.get(c)}" th:href="@{/companies/{s}(s=${companySlugs.get(c)})}"
+                                       th:text="${c} + ' · profile'"></a>
+                                    <a class="chip" th:unless="${companySlugs.get(c)}" th:href="@{/news(q=${c})}" th:text="${c}"></a>
+                                </th:block>
+                            </div>
+                            <p th:if="${analysis.involvedCompanies.isEmpty()}" class="text-2">No company named in the source text.</p>
+                        </div>
+                        <div class="qa">
+                            <h3>5. What business opportunities could emerge?</h3>
+                            <ul><li th:each="o : ${analysis.opportunities}" th:text="${o}"></li></ul>
+                        </div>
+                        <div class="qa">
+                            <h3>6. Should I learn or apply this technology?</h3>
+                            <div class="row" style="margin-bottom:6px">
+                                <span class="badge verdict" th:text="${analysis.learnVerdict}">Monitor</span>
+                                <a th:href="@{/position}" class="muted" style="font-size:12px">Based on your profile in My Technology Position →</a>
+                            </div>
+                            <ul><li th:each="r : ${analysis.learnReasons}" th:text="${r}"></li></ul>
+                        </div>
+                        <div class="qa">
+                            <h3>7. What practical projects could be built?</h3>
+                            <ol><li th:each="p : ${analysis.projects}" th:text="${p}"></li></ol>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stack" style="gap:18px">
+                    <div class="card">
+                        <div class="card-head"><div><h2>Quick read</h2><p>Automated interpretation</p></div></div>
+                        <p class="text-2" style="font-size:13px"><b>Impact:</b> <span th:text="${brief.impact}"></span></p>
+                        <p class="text-2" style="font-size:13px;margin-top:8px"><b>For developers &amp; businesses:</b> <span th:text="${brief.applications}"></span></p>
+                    </div>
+                    <div class="card" th:unless="${analysis.relatedTechnologies.isEmpty()}">
+                        <div class="card-head"><div><h2>On the Technology Radar</h2><p>Related radar entries (sample data)</p></div></div>
+                        <div class="list">
+                            <div class="list-item" th:each="t : ${analysis.relatedTechnologies}">
+                                <div style="flex:1"><h3><a th:href="@{/technologies/{s}(s=${t.slug})}" th:text="${t.name}"></a></h3>
+                                    <div class="meta"><span th:text="${t.domain}"></span><span th:text="'momentum ' + ${t.momentum}"></span></div></div>
+                                <span class="badge" th:classappend="'ring-' + ${t.ring}" th:text="${t.ring.label}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" th:if="${source}">
+                        <div class="card-head"><div><h2>Feed</h2><p>Collection health for this source</p></div></div>
+                        <p><b th:text="${source.name}"></b></p>
+                        <p class="muted mono" style="font-size:11.5px;word-break:break-all" th:text="${source.url}"></p>
+                        <div class="meta" style="margin-top:6px">
+                            <span class="badge" th:classappend="${source.lastStatus.name() == 'OK'} ? 'live' : ''" th:text="${source.lastStatus}"></span>
+                            <span th:text="'Last success ' + ${@fmt.ago(source.lastSuccessAt)}"></span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head"><div><h2>More in <span th:text="${item.category.label}"></span></h2></div></div>
+                        <div class="list">
+                            <div class="list-item" th:each="r : ${related}">
+                                <div style="min-width:0"><h3><a th:href="@{/news/{id}(id=${r.id})}" th:text="${r.title}"></a></h3>
+                                    <div class="meta"><th:block th:replace="~{fragments/news :: status(${r})}"></th:block>
+                                        <span class="mono" th:text="${@fmt.date(r.publishedAt)}"></span></div></div>
+                            </div>
+                            <div class="muted" th:if="${related.isEmpty()}">No other updates in this category yet.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# --- Build output
+.gradle/
+build/
+out/
+bin/
+
+# --- IDE
+.idea/
+*.iml
+.vscode/
+
+# --- Logs
+*.log
+logs/
+
+# --- Secrets and local configuration (never commit)
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+application-local.properties
+src/main/resources/application-local.*
+*.pem
+*.key
+*.p12
+*.jks
+
+# --- Database dumps and local database files
+*.sql
+*.dump
+*.sql.gz
+*.mv.db
+*.trace.db
+*.h2.db
+*.db
+*.sqlite
+
+# --- OS
+.DS_Store
+Thumbs.db
+desktop.ini

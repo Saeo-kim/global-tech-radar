@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<!-- ============================================================ head -->
+<th:block th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · Global Tech Radar'">Global Tech Radar</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%2322d3ee'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%23070e1c' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23070e1c'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</th:block>
+
+<!-- ============================================================ icons -->
+<th:block th:fragment="icon(name)" th:switch="${name}">
+    <svg th:case="'grid'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+    <svg th:case="'globe'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+    <svg th:case="'radar'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+    <svg th:case="'building'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="10" height="18" rx="1"/><path d="M14 9h5a1 1 0 0 1 1 1v11H14M8 7h2M8 11h2M8 15h2"/></svg>
+    <svg th:case="'briefcase'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>
+    <svg th:case="'target'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
+    <svg th:case="'file'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
+    <svg th:case="'settings'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    <svg th:case="'news'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13a1 1 0 0 1 1 1v13a2 2 0 0 0 2-2V8"/><path d="M4 5v12a2 2 0 0 0 2 2h14"/><path d="M8 9h6M8 13h6M8 17h3"/></svg>
+    <svg th:case="'external'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+    <svg th:case="'search'"viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <svg th:case="'info'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+    <svg th:case="'trend'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+    <svg th:case="'users'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 9M22 21a7 7 0 0 0-4-6.3"/></svg>
+    <svg th:case="'menu'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <svg th:case="'x'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    <svg th:case="'plus'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    <svg th:case="'refresh'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>
+    <svg th:case="'arrow'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    <svg th:case="'chip'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>
+    <svg th:case="*" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
+</th:block>
+
+<!-- ============================================================ sidebar -->
+<aside th:fragment="sidebar" class="sidebar" id="sidebar">
+    <a class="brand" th:href="@{/}">
+        <span class="brand-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#04121f" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 12l5.5-5.5"/></svg>
+        </span>
+        <span class="brand-name">GLOBAL TECH RADAR<small>Technology Intelligence</small></span>
+    </a>
+    <nav class="nav" aria-label="Main">
+        <div class="nav-label">Intelligence</div>
+        <th:block th:each="item, s : ${nav}">
+            <div class="nav-label" th:if="${item.path == '/position'}">Personal</div>
+            <div class="nav-label" th:if="${item.path == '/settings'}">System</div>
+            <a th:href="@{${item.path}}" th:classappend="${currentSection == item.path} ? 'active'"
+               th:attr="aria-current=${currentSection == item.path} ? 'page' : null">
+                <th:block th:replace="~{fragments/layout :: icon(${item.icon})}"></th:block>
+                <span th:text="${item.label}">Dashboard</span>
+            </a>
+        </th:block>
+    </nav>
+    <div class="sidebar-foot">
+        <div class="data-pill" th:classappend="${isSampleData} ? '' : 'live'">
+            <span class="pulse" th:if="${isSampleData}"></span>
+            <div>
+                <strong th:text="${isSampleData} ? 'Sample data mode' : 'Live data'">Sample data mode</strong>
+                <span th:text="${provider.displayName()}">Bundled sample dataset</span>
+                <div class="muted" th:if="${lastLoadedAt}" th:text="'Loaded ' + ${lastLoadedAt}"></div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- ============================================================ topbar -->
+<header th:fragment="topbar" class="topbar">
+    <button class="btn ghost sm menu-btn" type="button" id="menu-btn" aria-label="Open menu" aria-controls="sidebar">
+        <th:block th:replace="~{fragments/layout :: icon('menu')}"></th:block>
+    </button>
+    <form class="search" th:action="@{/search}" method="get" role="search">
+        <th:block th:replace="~{fragments/layout :: icon('search')}"></th:block>
+        <input type="search" name="q" id="global-search" placeholder="Search countries, technologies, companies, reports…"
+               th:value="${q}" autocomplete="off" aria-label="Search">
+        <kbd>/</kbd>
+    </form>
+    <div class="topbar-right">
+        <span class="clock" id="utc-clock" title="Coordinated Universal Time">UTC --:--</span>
+        <a th:href="@{/settings}" class="avatar" th:title="${displayName}"
+           th:text="${#strings.toUpperCase(#strings.substring(displayName + 'A', 0, 1))}">A</a>
+    </div>
+</header>
+
+<!-- ============================================================ sample banner -->
+<div th:fragment="sampleBanner" class="sample-banner" th:if="${isSampleData and showSampleBanner}" role="note">
+    <th:block th:replace="~{fragments/layout :: icon('info')}"></th:block>
+    <span><strong>Sample data.</strong> Indicator figures on this page (indices, scores, salaries, trends) are illustrative
+        values from the bundled sample dataset — not live measurements, and not suitable for quoting. Each block shows its
+        source and date. News marked <em>Collected</em> is real, with a link to the original article.</span>
+    <a th:href="@{/settings#data}">Data sources →</a>
+</div>
+
+<!-- ============================================================ provenance -->
+<div th:fragment="provenance(p)" class="provenance" th:if="${p != null}">
+    <span class="badge" th:classappend="${p.sample} ? 'sample' : 'live'" th:text="${p.dataStatus.label}">Sample data</span>
+    <span>Source: <b th:text="${p.sourceName}">source</b>
+        <a th:if="${p.sourceUrl}" th:href="${p.sourceUrl}" target="_blank" rel="noopener">↗</a></span>
+    <span th:if="${p.publishedOn}">Published: <b class="mono" th:text="${#temporals.format(p.publishedOn, 'yyyy-MM-dd')}">2026-11-01</b></span>
+    <span th:if="${p.sample and p.plannedSource != null}">Planned live source: <span th:text="${p.plannedSource}"></span></span>
+</div>
+
+<!-- ============================================================ toast + scripts -->
+<th:block th:fragment="scripts">
+    <div class="scrim" id="scrim"></div>
+    <div class="toast" th:if="${toast}" role="status" data-autohide th:text="${toast}"></div>
+    <div class="toast error" th:if="${toastError}" role="alert" data-autohide th:text="${toastError}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</th:block>
+
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head('Global Work Market')}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">Global Work Market</div>
+                    <h1>Where developer work is going</h1>
+                    <p class="lead">Remote eligibility, freelance rates, salaries, in-demand skills and international project archetypes.</p>
+                </div>
+                <a class="btn primary" th:href="@{/position}">Compare with my skills →</a>
+            </div>
+            <div th:replace="~{fragments/layout :: sampleBanner}"></div>
+
+            <section class="card">
+                <div class="card-head"><div><h2>Developer market trend</h2><p>Postings index, remote-eligible share and AI-skill share, 2019–2026</p></div></div>
+                <div class="legend" id="market-legend"></div>
+                <div class="chart-box"><canvas id="market-trend" role="img" aria-label="Developer market trend"></canvas></div>
+                <div class="provenance" id="market-provenance"></div>
+            </section>
+
+            <div data-tabs>
+                <div class="tabs" role="tablist">
+                    <button class="tab active" data-tab="remote" role="tab">Remote Jobs</button>
+                    <button class="tab" data-tab="freelance" role="tab">Freelance</button>
+                    <button class="tab" data-tab="salaries" role="tab">Developer Salaries</button>
+                    <button class="tab" data-tab="skills" role="tab">In-demand Skills</button>
+                    <button class="tab" data-tab="projects" role="tab">International Projects</button>
+                </div>
+
+                <!-- remote -->
+                <div class="tab-panel active" data-panel="remote" style="padding-top:18px">
+                    <div class="grid g-2">
+                        <div class="card">
+                            <div class="card-head"><div><h2>Remote-eligible share by role</h2><p>% of postings allowing fully remote work</p></div></div>
+                            <div class="chart-box tall"><canvas id="remote-role"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head"><div><h2>By region</h2><p>Remote-eligible share across developer postings</p></div></div>
+                            <th:block th:each="r : ${remote}" th:if="${r.region != 'Global'}">
+                                <div class="bar-row">
+                                    <span class="label" th:text="${r.region}">Europe</span>
+                                    <div class="bar"><span th:style="'width:' + ${r.metricValue * 2} + '%'"></span></div>
+                                    <span class="val" th:text="${#numbers.formatDecimal(r.metricValue, 1, 0)} + '%'">31%</span>
+                                </div>
+                            </th:block>
+                            <p class="muted" style="font-size:12px;margin-top:10px">Bar length scaled to a 50% maximum for readability.</p>
+                            <h3 style="margin:18px 0 8px">Role detail</h3>
+                            <table class="data" data-sortable>
+                                <thead><tr><th data-sort="text">Role family</th><th data-sort="num" class="r">Remote share</th><th data-sort="num" class="r">YoY (pts)</th></tr></thead>
+                                <tbody>
+                                <tr th:each="r : ${remote}" th:if="${r.region == 'Global'}">
+                                    <td th:text="${r.title}"></td>
+                                    <td class="r num" th:data-value="${r.metricValue}" th:text="${#numbers.formatDecimal(r.metricValue, 1, 0)} + '%'"></td>
+                                    <td class="r" th:data-value="${r.secondaryValue}"><span class="delta" th:classappend="${r.secondaryValue >= 0} ? 'up' : 'down'"
+                                        th:text="(${r.secondaryValue >= 0} ? '+' : '') + ${#numbers.formatDecimal(r.secondaryValue, 1, 1)}"></span></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div th:replace="~{fragments/layout :: provenance(${remote.isEmpty() ? null : remote[0].provenance})}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- freelance -->
+                <div class="tab-panel" data-panel="freelance" style="padding-top:18px">
+                    <div class="grid g-main">
+                        <div class="card">
+                            <div class="card-head"><div><h2>Freelance hourly rate bands</h2><p>USD per hour, experienced freelancers · bar = typical low–high range</p></div></div>
+                            <div class="chart-box tall"><canvas id="freelance-chart"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head"><div><h2>Rate calculator</h2><p>Estimate monthly gross from a rate band</p></div></div>
+                            <div class="stack">
+                                <label class="field">Specialisation
+                                    <select id="calc-role">
+                                        <option th:each="f : ${freelance}" th:value="${f.metricValue + '-' + f.secondaryValue}" th:text="${f.title}"></option>
+                                    </select></label>
+                                <label class="field">Position in band: <span id="calc-pos-label">50%</span>
+                                    <input type="range" id="calc-pos" min="0" max="100" value="50"></label>
+                                <label class="field">Billable hours / week
+                                    <input type="number" id="calc-hours" min="1" max="60" value="30"></label>
+                                <div class="card" style="background:var(--bg-2);box-shadow:none">
+                                    <div class="kpi-label">Estimated monthly gross</div>
+                                    <div class="kpi-value" id="calc-out">$0</div>
+                                    <div class="kpi-foot" id="calc-rate">at $0/hr · 4.33 weeks/month</div>
+                                </div>
+                                <p class="muted" style="font-size:12px">Illustrative only — based on sample rate bands, before tax, fees and unbilled time.</p>
+                            </div>
+                            <div th:replace="~{fragments/layout :: provenance(${freelance.isEmpty() ? null : freelance[0].provenance})}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- salaries -->
+                <div class="tab-panel" data-panel="salaries" style="padding-top:18px">
+                    <div class="grid g-main">
+                        <div class="card">
+                            <div class="card-head">
+                                <div><h2>Median annual base salary</h2><p>Mid-level engineers, USD, not adjusted for purchasing power</p></div>
+                            </div>
+                            <div class="legend" id="salary-legend"></div>
+                            <div class="chart-box tall"><canvas id="salary-chart"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head"><div><h2>Salary table</h2><p>Click a header to sort</p></div></div>
+                            <table class="data" data-sortable>
+                                <thead><tr><th data-sort="text">Country</th><th data-sort="num" class="r">Software eng.</th><th data-sort="num" class="r">AI/ML eng.</th><th data-sort="num" class="r">AI premium</th></tr></thead>
+                                <tbody>
+                                <tr th:each="s : ${salaries}" th:with="c=${countryIndex[s.region]}">
+                                    <td th:data-value="${c != null ? c.name : s.region}"><span th:if="${c}" th:text="${c.flag}"></span> <span th:text="${c != null ? c.name : s.region}"></span></td>
+                                    <td class="r num" th:data-value="${s.metricValue}" th:text="'$' + ${#numbers.formatInteger(s.metricValue / 1000, 1)} + 'k'"></td>
+                                    <td class="r num" th:data-value="${s.secondaryValue}" th:text="'$' + ${#numbers.formatInteger(s.secondaryValue / 1000, 1)} + 'k'"></td>
+                                    <td class="r num" th:with="prem=${(s.secondaryValue - s.metricValue) * 100 / s.metricValue}" th:data-value="${prem}"
+                                        th:text="'+' + ${#numbers.formatDecimal(prem, 1, 0)} + '%'"></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div th:replace="~{fragments/layout :: provenance(${salaries.isEmpty() ? null : salaries[0].provenance})}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- skills -->
+                <div class="tab-panel" data-panel="skills" id="skills" style="padding-top:18px">
+                    <div class="grid g-main">
+                        <div class="card">
+                            <div class="card-head"><div><h2>Skill demand</h2><p>Demand score 0–100</p></div>
+                                <div class="chips" id="skill-sort">
+                                    <button class="chip active" data-sort="demand">By demand</button>
+                                    <button class="chip" data-sort="growth">By growth</button>
+                                </div></div>
+                            <div class="chart-box" style="height:520px"><canvas id="skills-chart"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head"><div><h2>Skill table</h2><p>Demand and YoY growth</p></div></div>
+                            <table class="data" data-sortable>
+                                <thead><tr><th data-sort="text">Skill</th><th data-sort="text">Area</th><th data-sort="num" class="r">Demand</th><th data-sort="num" class="r">Growth</th></tr></thead>
+                                <tbody>
+                                <tr th:each="s : ${skills}">
+                                    <td><b th:text="${s.title}"></b></td>
+                                    <td class="muted" th:text="${s.tags}"></td>
+                                    <td class="r num" th:data-value="${s.metricValue}" th:text="${#numbers.formatDecimal(s.metricValue, 1, 0)}"></td>
+                                    <td class="r" th:data-value="${s.secondaryValue}"><span class="delta up" th:text="'+' + ${#numbers.formatDecimal(s.secondaryValue, 1, 0)} + '%'"></span></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div th:replace="~{fragments/layout :: provenance(${skills.isEmpty() ? null : skills[0].provenance})}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- projects -->
+                <div class="tab-panel" data-panel="projects" style="padding-top:18px">
+                    <div class="row" style="margin-bottom:14px">
+                        <input type="search" id="project-filter" placeholder="Filter by skill, region or keyword…" style="max-width:340px">
+                        <span class="muted" id="project-count"></span>
+                    </div>
+                    <div class="grid g-3" id="project-cards">
+                        <div class="card company-card" th:each="p : ${projects}" th:with="c=${countryIndex[p.region]}"
+                             th:data-search="${p.title + ' ' + p.region + ' ' + p.tags + ' ' + p.detail + (c != null ? ' ' + c.name : '')}">
+                            <div class="row between">
+                                <span class="badge accent" th:text="${c != null ? c.flag + ' ' + c.name : p.region}">Europe</span>
+                                <span class="badge sample">Sample archetype</span>
+                            </div>
+                            <h3 th:text="${p.title}">Project</h3>
+                            <p class="text-2" style="font-size:13px" th:text="${#strings.replace(p.detail, 'Sample project archetype (team size in secondary value). ', '')}"></p>
+                            <div class="row" style="font-size:12.5px">
+                                <span class="muted">Duration</span><b class="num" th:text="${#numbers.formatDecimal(p.metricValue, 1, 0)} + ' mo'"></b>
+                                <span class="muted" style="margin-left:10px">Team</span><b class="num" th:text="${#numbers.formatDecimal(p.secondaryValue, 1, 0)}"></b>
+                            </div>
+                            <div class="chips"><span class="tag" th:each="t : ${p.tagList}" th:text="${t}"></span></div>
+                        </div>
+                    </div>
+                    <div th:replace="~{fragments/layout :: provenance(${projects.isEmpty() ? null : projects[0].provenance})}"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/pages/market.js}"></script>
+</body>
+</html>

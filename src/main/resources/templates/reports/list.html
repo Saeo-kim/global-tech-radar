@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head('Intelligence Reports')}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">Intelligence Reports</div>
+                    <h1>Analyst briefs</h1>
+                    <p class="lead">Short, structured briefs on technology, policy and talent shifts. Each brief shows its source and publication date.</p>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: sampleBanner}"></div>
+
+            <form class="card" th:action="@{/reports}" method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+                <label class="field" style="flex:2;min-width:220px">Search
+                    <input type="search" name="q" th:value="${q}" placeholder="Keyword, tag…"></label>
+                <label class="field" style="flex:1;min-width:160px">Category
+                    <select name="category" onchange="this.form.submit()">
+                        <option value="">All categories</option>
+                        <option th:each="c : ${categories}" th:value="${c}" th:text="${c}" th:selected="${c == category}"></option>
+                    </select></label>
+                <label class="field" style="flex:1;min-width:140px">Region
+                    <select name="region" onchange="this.form.submit()">
+                        <option value="">All regions</option>
+                        <option th:each="r : ${regions}" th:value="${r}" th:text="${r}" th:selected="${r == region}"></option>
+                    </select></label>
+                <button class="btn primary" type="submit">Apply</button>
+                <a class="btn ghost" th:href="@{/reports}">Reset</a>
+            </form>
+
+            <p class="muted" th:text="'Showing ' + ${reports.size()} + ' of ' + ${total} + ' briefs'"></p>
+
+            <section class="grid g-2">
+                <article class="card" th:each="r : ${reports}" style="display:flex;flex-direction:column;gap:10px">
+                    <div class="row between">
+                        <div class="row">
+                            <span class="badge accent" th:text="${r.category}"></span>
+                            <span class="badge" th:text="${r.region}"></span>
+                        </div>
+                        <span class="badge" th:classappend="${r.provenance.sample} ? 'sample' : 'live'" th:text="${r.provenance.dataStatus.label}"></span>
+                    </div>
+                    <h2 style="font-size:17px"><a th:href="@{/reports/{id}(id=${r.id})}" th:text="${r.title}" style="color:var(--text)"></a></h2>
+                    <p class="text-2" th:text="${r.summary}"></p>
+                    <div class="chips"><span class="tag" th:each="t : ${r.tagList}" th:text="'#' + ${t}"></span></div>
+                    <div class="row between" style="margin-top:auto">
+                        <span class="muted" style="font-size:12px">
+                            <span th:text="${r.provenance.sourceName}"></span> ·
+                            <span class="mono" th:text="${#temporals.format(r.provenance.publishedOn, 'yyyy-MM-dd')}"></span> ·
+                            <span th:text="${r.readMinutes} + ' min read'"></span></span>
+                        <a class="btn sm" th:href="@{/reports/{id}(id=${r.id})}">Read →</a>
+                    </div>
+                </article>
+            </section>
+            <div class="card empty-state" th:if="${reports.isEmpty()}">No briefs match these filters.</div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head('Country Intelligence')}"></th:block>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css">
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">Country Intelligence</div>
+                    <h1>National technology capability</h1>
+                    <p class="lead">Nine technology economies compared on AI readiness, developer talent, R&amp;D intensity,
+                        startup ecosystems and digital infrastructure.</p>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: sampleBanner}"></div>
+
+            <section class="grid g-main">
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>Capability map</h2><p>Click a country to add or remove it from the comparison.</p></div>
+                        <div class="chips" id="map-metric">
+                            <button class="chip active" data-metric="techIndex">Tech index</button>
+                            <button class="chip" data-metric="aiReadiness">AI</button>
+                            <button class="chip" data-metric="developerTalent">Talent</button>
+                            <button class="chip" data-metric="startupEcosystem">Startups</button>
+                        </div>
+                    </div>
+                    <div class="map-wrap" style="height:360px">
+                        <div id="world-map"></div>
+                        <div class="map-legend" aria-hidden="true">
+                            <span><i style="background:#9ec5f4"></i>90+</span><span><i style="background:#5598e7"></i>80–89</span>
+                            <span><i style="background:#2a78d6"></i>70–79</span><span><i style="background:#1c5cab"></i>&lt;70</span>
+                        </div>
+                    </div>
+                    <div class="map-fallback" id="map-fallback">Map unavailable offline — use the country cards below.</div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <div><h2>Compare countries</h2><p>Up to 3 · indicator profile</p></div>
+                    </div>
+                    <div class="chips" id="compare-picker" style="margin-bottom:10px">
+                        <button class="chip" th:each="c : ${countries}" th:data-code="${c.code}" th:text="${c.flag + ' ' + c.code}">US</button>
+                    </div>
+                    <div class="legend" id="compare-legend"></div>
+                    <div class="chart-box"><canvas id="compare-chart" role="img" aria-label="Country comparison radar chart"></canvas></div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <div><h2>Technology index trend</h2><p>Selected countries, 2021–2026</p></div>
+                </div>
+                <div class="legend" id="trend-legend"></div>
+                <div class="chart-box"><canvas id="trend-chart" role="img" aria-label="Country technology index trend"></canvas></div>
+                <div class="provenance" id="trend-provenance"></div>
+            </section>
+
+            <div class="row between">
+                <h2>Country profiles</h2>
+                <input type="search" id="country-filter" placeholder="Filter by name, region or strength…" style="max-width:320px">
+            </div>
+            <section class="grid g-3" id="country-cards">
+                <a class="card domain-card" th:each="c, s : ${countries}" th:href="@{/countries/{c}(c=${c.code})}"
+                   th:data-search="${c.name + ' ' + c.region + ' ' + c.strengths}">
+                    <div class="top">
+                        <div class="row"><span class="flag" style="font-size:28px" th:text="${c.flag}"></span>
+                            <div><h3 th:text="${c.name}">USA</h3><span class="muted" style="font-size:12px" th:text="${c.region}">NA</span></div></div>
+                        <div style="text-align:right"><span class="idx" th:text="${c.techIndex}">94</span>
+                            <div class="muted" style="font-size:11px" th:text="'Rank #' + ${s.count}">#1</div></div>
+                    </div>
+                    <div class="metric-list">
+                        <div class="metric"><span>AI readiness</span><b class="num" th:text="${c.aiReadiness}"></b><div class="bar"><span th:style="'width:' + ${c.aiReadiness} + '%'"></span></div></div>
+                        <div class="metric"><span>Developer talent</span><b class="num" th:text="${c.developerTalent}"></b><div class="bar"><span th:style="'width:' + ${c.developerTalent} + '%'"></span></div></div>
+                        <div class="metric"><span>R&amp;D intensity</span><b class="num" th:text="${c.rndIntensity}"></b><div class="bar"><span th:style="'width:' + ${c.rndIntensity} + '%'"></span></div></div>
+                    </div>
+                    <div class="chips"><span class="tag" th:each="st : ${c.strengthList}" th:text="${st}">x</span></div>
+                    <div class="row between"><span class="badge sample" th:if="${c.provenance.sample}">Sample data</span>
+                        <span class="muted" style="font-size:12px" th:text="'~' + ${#numbers.formatInteger(c.developersThousands, 1, 'COMMA')} + 'k developers'"></span></div>
+                </a>
+            </section>
+            <div th:replace="~{fragments/layout :: provenance(${countries.isEmpty() ? null : countries[0].provenance})}"></div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"></script>
+<script th:src="@{/js/pages/world-map.js}"></script>
+<script th:src="@{/js/pages/countries.js}"></script>
+</body>
+</html>

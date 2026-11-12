@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head(${country.name})}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="breadcrumb"><a th:href="@{/countries}">Country Intelligence</a> / <span th:text="${country.name}"></span></div>
+                    <div class="row">
+                        <span class="flag" style="font-size:44px" th:text="${country.flag}"></span>
+                        <div>
+                            <h1 th:text="${country.name}">Country</h1>
+                            <div class="muted" th:text="${country.region} + ' · Rank #' + ${rank} + ' of ' + ${total} + ' tracked'"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chips">
+                    <a class="chip" th:each="c : ${countries}" th:href="@{/countries/{c}(c=${c.code})}"
+                       th:classappend="${c.code == country.code} ? 'active'" th:text="${c.flag + ' ' + c.code}">US</a>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: sampleBanner}"></div>
+
+            <section class="grid g-4">
+                <div class="card kpi"><span class="kpi-label">Technology index</span><span class="kpi-value" th:text="${country.techIndex}">94</span><span class="kpi-foot">Composite, 0–100</span></div>
+                <div class="card kpi"><span class="kpi-label">AI readiness</span><span class="kpi-value" th:text="${country.aiReadiness}">96</span><span class="kpi-foot">Compute, talent, adoption</span></div>
+                <div class="card kpi"><span class="kpi-label">Developers (est.)</span><span class="kpi-value"><span th:text="${#numbers.formatInteger(country.developersThousands, 1, 'COMMA')}">4,400</span><small>k</small></span><span class="kpi-foot">Professional developers</span></div>
+                <div class="card kpi"><span class="kpi-label">Median mid-level SWE salary</span>
+                    <span class="kpi-value" th:if="${salary}"><span th:text="'$' + ${#numbers.formatInteger(salary.metricValue / 1000, 1)} + 'k'">$155k</span><small>USD</small></span>
+                    <span class="kpi-value" th:unless="${salary}">–</span>
+                    <span class="kpi-foot" th:if="${salary}" th:text="'AI/ML engineer: $' + ${#numbers.formatInteger(salary.secondaryValue / 1000, 1)} + 'k'"></span></div>
+            </section>
+
+            <section class="grid g-main">
+                <div class="card">
+                    <div class="card-head"><div><h2>Overview</h2><p>Analyst summary</p></div></div>
+                    <p class="text-2" style="font-size:14.5px;line-height:1.7" th:text="${country.summary}"></p>
+                    <h3 style="margin:18px 0 8px">Strengths</h3>
+                    <div class="chips"><span class="tag" th:each="s : ${country.strengthList}" th:text="${s}"></span></div>
+                    <h3 style="margin:18px 0 8px">Technology trend</h3>
+                    <div class="chart-box short"><canvas id="country-trend" role="img" aria-label="Technology index trend"></canvas></div>
+                    <div class="provenance" id="country-trend-provenance"></div>
+                </div>
+                <div class="card">
+                    <div class="card-head"><div><h2>Indicator profile</h2><p>vs. average of tracked countries</p></div></div>
+                    <div class="legend" id="country-radar-legend"></div>
+                    <div class="chart-box"><canvas id="country-radar" th:data-code="${country.code}" role="img" aria-label="Indicator radar chart"></canvas></div>
+                    <table class="data" style="margin-top:10px">
+                        <tbody>
+                        <tr><td>AI readiness</td><td class="r num" th:text="${country.aiReadiness}"></td></tr>
+                        <tr><td>Developer talent</td><td class="r num" th:text="${country.developerTalent}"></td></tr>
+                        <tr><td>R&amp;D intensity</td><td class="r num" th:text="${country.rndIntensity}"></td></tr>
+                        <tr><td>Startup ecosystem</td><td class="r num" th:text="${country.startupEcosystem}"></td></tr>
+                        <tr><td>Digital infrastructure</td><td class="r num" th:text="${country.digitalInfrastructure}"></td></tr>
+                        <tr><td>Remote-work friendliness</td><td class="r num" th:text="${country.remoteFriendliness}"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="grid g-3">
+                <div class="card">
+                    <div class="card-head"><div><h2>Focus domains</h2><p>Strategic technology priorities</p></div></div>
+                    <div class="list">
+                        <div class="list-item" th:each="d : ${focusTechnologies}">
+                            <div style="flex:1">
+                                <div class="row between"><h3><a th:href="@{/technologies(domain=${d.name})}" th:text="${d.name}"></a></h3>
+                                    <b class="num" th:text="${#numbers.formatDecimal(d.currentIndex, 1, 0)}"></b></div>
+                                <p th:text="${d.description}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-head"><div><h2>Leading in</h2><p>Technologies where this country is a leader</p></div></div>
+                    <div class="list">
+                        <div class="list-item" th:each="t : ${leadingIn}">
+                            <div style="flex:1;min-width:0">
+                                <h3><a th:href="@{/technologies/{s}(s=${t.slug})}" th:text="${t.name}"></a></h3>
+                                <div class="meta"><span class="badge" th:classappend="'ring-' + ${t.ring}" th:text="${t.ring.label}"></span><span th:text="${t.domain}"></span></div>
+                            </div>
+                        </div>
+                        <div class="empty-state" th:if="${leadingIn.isEmpty()}">No leading technologies in the dataset.</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-head"><div><h2>Companies &amp; intelligence</h2><p>Headquartered here · regional briefs</p></div></div>
+                    <div class="list">
+                        <div class="list-item" th:each="co : ${companies}">
+                            <div><h3><a th:href="@{/companies/{s}(s=${co.slug})}" th:text="${co.name}"></a></h3>
+                                <div class="meta" th:text="${co.sector}"></div></div>
+                        </div>
+                        <div class="list-item" th:each="r : ${reports}">
+                            <div><h3><a th:href="@{/reports/{id}(id=${r.id})}" th:text="${r.title}"></a></h3>
+                                <div class="meta"><span class="badge sample">Sample</span><span class="mono" th:text="${r.provenance.publishedOn}"></span></div></div>
+                        </div>
+                        <div class="empty-state" th:if="${companies.isEmpty() and reports.isEmpty()}">No tracked companies or regional briefs yet.</div>
+                    </div>
+                </div>
+            </section>
+            <div th:replace="~{fragments/layout :: provenance(${country.provenance})}"></div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/pages/countries.js}"></script>
+</body>
+</html>

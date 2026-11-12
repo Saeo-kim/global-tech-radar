@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head(${company.name})}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="breadcrumb"><a th:href="@{/companies}">Company Intelligence</a> / <span th:text="${company.name}"></span></div>
+                    <div class="row">
+                        <span class="logo" style="width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-weight:800;font-size:22px;background:var(--surface-3);border:1px solid var(--border-strong);color:var(--accent)"
+                              th:text="${#strings.substring(company.name, 0, 1)}">G</span>
+                        <div>
+                            <h1 th:text="${company.name}">Company</h1>
+                            <div class="muted">
+                                <span th:text="${company.sector}"></span> ·
+                                <span th:text="${company.headquartersCity}"></span>,
+                                <a th:if="${country}" th:href="@{/countries/{c}(c=${country.code})}" th:text="${country.flag + ' ' + country.name}"></a>
+                                <span th:unless="${country}" th:text="${company.headquartersCountry}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi" style="text-align:right">
+                    <span class="kpi-label" style="justify-content:flex-end">Composite score</span>
+                    <span class="kpi-value" th:text="${company.compositeScore}">90</span>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: sampleBanner}"></div>
+
+            <section class="grid g-main">
+                <div class="card">
+                    <div class="card-head"><div><h2>Strategic profile</h2></div></div>
+                    <p class="text-2" style="font-size:14.5px;line-height:1.7" th:text="${company.summary}"></p>
+                    <h3 style="margin:18px 0 8px">Focus areas</h3>
+                    <div class="chips"><span class="tag" th:each="f : ${company.focusAreaList}" th:text="${f}"></span></div>
+                    <h3 style="margin:18px 0 8px">Analyst watch list</h3>
+                    <ul class="text-2" style="padding-left:18px;margin:0">
+                        <li th:each="w : ${company.watchItemList}" th:text="${w}" style="margin-bottom:6px"></li>
+                    </ul>
+                    <h3 style="margin:18px 0 8px">Technologies on the radar</h3>
+                    <div class="list">
+                        <div class="list-item" th:each="t : ${technologies}">
+                            <div style="flex:1"><h3><a th:href="@{/technologies/{s}(s=${t.slug})}" th:text="${t.name}"></a></h3>
+                                <div class="meta" th:text="${t.domain}"></div></div>
+                            <span class="badge" th:classappend="'ring-' + ${t.ring}" th:text="${t.ring.label}"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stack">
+                    <div class="card">
+                        <div class="card-head"><div><h2>Index profile</h2><p>vs. average of tracked companies</p></div></div>
+                        <div class="legend" id="company-radar-legend"></div>
+                        <div class="chart-box"><canvas id="company-radar" th:data-slug="${company.slug}" role="img" aria-label="Company index radar"></canvas></div>
+                        <table class="data" style="margin-top:8px"><tbody>
+                        <tr><td>AI investment</td><td class="r num" th:text="${company.aiInvestmentIndex}"></td></tr>
+                        <tr><td>Talent demand</td><td class="r num" th:text="${company.talentDemandIndex}"></td></tr>
+                        <tr><td>R&amp;D</td><td class="r num" th:text="${company.rndIndex}"></td></tr>
+                        <tr><td>Ecosystem</td><td class="r num" th:text="${company.ecosystemIndex}"></td></tr>
+                        <tr><td>Hiring momentum</td><td class="r num" th:text="${company.hiringMomentum}"></td></tr>
+                        </tbody></table>
+                    </div>
+                    <div class="card">
+                        <div class="card-head"><div><h2>Closest peers</h2><p>By composite score</p></div></div>
+                        <div class="list">
+                            <div class="list-item" th:each="p : ${peers}">
+                                <div style="flex:1"><h3><a th:href="@{/companies/{s}(s=${p.slug})}" th:text="${p.name}"></a></h3>
+                                    <div class="meta" th:text="${p.sector}"></div></div>
+                                <b class="num" th:text="${p.compositeScore}"></b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div th:replace="~{fragments/layout :: provenance(${company.provenance})}"></div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/pages/companies.js}"></script>
+</body>
+</html>

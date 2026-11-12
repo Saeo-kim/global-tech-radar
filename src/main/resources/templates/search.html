@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-accent=${accent}">
+<head>
+    <th:block th:replace="~{fragments/layout :: head('Search')}"></th:block>
+</head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar}"></header>
+        <main class="content">
+            <div class="page-head">
+                <div>
+                    <div class="eyebrow">Search</div>
+                    <h1 th:text="${q.isBlank()} ? 'Search intelligence' : 'Results for “' + ${q} + '”'">Search</h1>
+                    <p class="lead" th:text="${hits.size()} + ' matches across countries, technologies, companies, reports and skills'"></p>
+                </div>
+            </div>
+            <section class="card">
+                <div class="list">
+                    <a class="list-item" th:each="h : ${hits}" th:href="${h.url}" style="color:inherit;text-decoration:none">
+                        <span class="badge accent" style="min-width:88px;justify-content:center" th:text="${h.type}"></span>
+                        <div><h3 th:text="${h.title}"></h3><div class="meta" th:text="${h.subtitle}"></div></div>
+                    </a>
+                </div>
+                <div class="empty-state" th:if="${hits.isEmpty()}">
+                    <span th:text="${q.isBlank()} ? 'Type in the search box above (press / to focus).' : 'Nothing matched. Try a broader term like “AI”, “cloud” or “Korea”.'"></span>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
